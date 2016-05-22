@@ -10,7 +10,6 @@ import Adafruit_CharLCD as LCD
 print "Running BITplayer.py script"
 sleep(10)
 
-
 #Raspberry Pi pin configuration:
 lcd_rs=26  
 lcd_en=19
@@ -72,7 +71,9 @@ lcd.clear()
 if (listMp3 <= 0):
     print "Unable to find Mp3 files"
   
-    
+############################    
+#     Start the music      #
+############################
 while True:
    
     if run==1 and shuffle ==0:
@@ -89,6 +90,7 @@ while True:
       stop=0
       sleep(1)
       
+      #play shuffled music
     if run==0 and shuffle==1:
        lcd.clear()
        random.shuffle(mp3Files)#to shuffle the list of mp3
@@ -109,7 +111,7 @@ while True:
       proc=omx.poll()
       if proc !=0:
          omx.stdin.write("p")#pause or play
-      if checkBtn%2==0:
+      if checkBtn%2==0: #check for pause and play
            lcd.clear()
            lcd.message("Paused")
            status=0
@@ -159,31 +161,33 @@ while True:
         if index>listMp3 - 1:
               index=0
               sleep(1)
-              
+    #Play previous song           
     if (GPIO.input(previousBtn)==True):
          if stop==0:
              omx.stdin.write("q")
              run=1
-             os.system("pkill omxplayer")
+             os.system("pkill omxplayer")#terminate omxplayer(because multiple omxplayer running) 
              index=index-1
              lcd.message("Playing")
              sleep(1)
              lcd.clear()
-             songPlaying=eyed3.load(mp3Files[index])
-             lcd.message(songPlaying.tag.title+"\n"+songPlaying.tag.artist) 
+             songPlaying=eyed3.load(mp3Files[index])# get song details
+             lcd.message(songPlaying.tag.title+"\n"+songPlaying.tag.artist)#display song details on lcd 
          if index<0:
                  index=0
                  sleep(1)
+    #Volume up button press
     if (GPIO.input(volUpBtn)==True):
          if stop==0:    
             omx.stdin.write("+")
             sleep(1)
-            
+    #Volume down button press        
     if (GPIO.input(volDwnBtn)==True):
          if stop==0:    
             omx.stdin.write("-")
             sleep(1)
             
+    #Shuffle button pressed         
     if(GPIO.input(shuffleBtn)==True):
         proc=omx.poll() 
         if stop==0 and proc!=0:
@@ -192,7 +196,7 @@ while True:
             shuffle=1
             sleep(1)
        
-    else:
+    else: #if finished playing go back to beginning song
         proc =omx.poll()
         if (proc==0 and stop==0):
             run=1
