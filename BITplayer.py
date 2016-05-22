@@ -1,0 +1,202 @@
+#!/usr/bin/env python
+#Raspberry Pi mp3 player
+
+import os,glob,random
+import RPi.GPIO as GPIO
+from time import sleep
+import subprocess
+import eyed3
+import Adafruit_CharLCD as LCD
+print "Running BITplayer.py script"
+sleep(10)
+
+
+#Raspberry Pi pin configuration:
+lcd_rs=26  
+lcd_en=19
+lcd_d4 =13
+lcd_d5 =6
+lcd_d6 =5
+lcd_d7 =16
+pausePlyBtn=17
+stopBtn=22
+nextBtn=21
+previousBtn=0 
+volUpBtn=0
+volDwnBtn=0
+shuffleBtn=0
+path= "/media/pi/B228858B28854EF3/BIT"
+run=1#script runs
+index=0#index music to play
+stop=0
+shuffle=0
+status=1#1 play 0 pause
+checkBtn=1
+
+
+#column and row size for 16x2 LCD.
+lcd_width = 16
+lcd_height = 2
+
+#Initialize the LCD using pins above
+lcd = LCD.Adafruit_CharLCD(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7,
+                           lcd_width, lcd_height)
+
+#Setup GPIO pins
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(pausePlyBtn,GPIO.IN)#Pause
+GPIO.setup(stopBtn,GPIO.IN)#stop
+GPIO.setup(nextBtn,GPIO.IN)#next
+GPIO.setup(previousBtn,GPIO.IN)#previous
+GPIO.setup(volUpBtn,GPIO.IN)#Volume up
+GPIO.setup(volDwnBtn,GPIO.IN)#volume down
+GPIO.setup(shuffleBtn,GPIO.IN)#shuffle
+GPIO.setup(lcd_rs,GPIO.OUT)
+GPIO.setup(lcd_en,GPIO.OUT)
+GPIO.setup(lcd_d4,GPIO.OUT)
+GPIO.setup(lcd_d5,GPIO.OUT)
+GPIO.setup(lcd_d6,GPIO.OUT)
+GPIO.setup(lcd_d7,GPIO.OUT)
+
+os.chdir(path)#change directory
+mp3Files=glob.glob("*.mp3")#finds all mp3 files
+listMp3=len(mp3Files)#list
+shuffleList=random.choice(os.listdir("/media/pi/B228858B28854EF3/BIT"))
+#shuffleFile=random.shuffle(mp3Files)
+#shuffleFile=filter(lambda f: f.endswith(".mp3"),shuffleList)
+#os.system("tvservice -o")
+
+lcd.message("Music Player \nby StrawberryPi")  
+sleep(1.5)
+lcd.clear()
+if (listMp3 <= 0):
+    print "Unable to find Mp3 files"
+  
+    
+while True:
+   
+    if run==1 and shuffle ==0:
+      lcd.clear()
+      omx= subprocess.Popen(["omxplayer","-o","local",mp3Files[index]],stdin=subprocess.PIPE)
+      print "Song "+mp3Files[index]
+      lcd.message("Playing")
+      sleep(1)
+      lcd.clear()
+      songPlaying=eyed3.load(mp3Files[index])
+      lcd.message(songPlaying.tag.title+"\n"+ songPlaying.tag.artist)
+      status=1
+      run=0
+      stop=0
+      sleep(1)
+      
+    if run==0 and shuffle==1:
+       lcd.clear()
+       random.shuffle(mp3Files)#to shuffle the list of mp3
+       omx= subprocess.Popen(["omxplayer","-o","local",mp3Files[index]],stdin=subprocess.PIPE) 
+       songPlaying=eyed3.load(mp3Files[index])
+       lcd.message("Playing")
+       sleep(1)
+       lcd.clear()
+       lcd.message(songPlaying.tag.title+"\n"+ songPlaying.tag.artist)
+       status=1
+       stop=0
+       shuffle=0
+       sleep(1)
+
+    if(GPIO.input(pausePlyBtn)==True):
+      lcd.clear()
+      checkBtn+=1
+      proc=omx.poll()
+      if proc !=0:
+         omx.stdin.write("p")#pause or play
+      if checkBtn%2==0:
+           lcd.clear()
+           lcd.message("Paused")
+           status=0
+           sleep(1)
+      else:
+          lcd.clear()
+          lcd.message("Playing")
+          sleep(1)
+          lcd.clear()
+          songPlaying=eyed3.load(mp3Files[index])
+          lcd.message(songPlaying.tag.title+"\n"+songPlaying.tag.artist)
+          status=1      
+          sleep(1) 
+      
+          
+    if(GPIO.input(stopBtn)==True):
+        proc=omx.poll()
+        if proc !=0:
+            lcd.clear()
+            omx.stdin.write("q")#stop
+            print "stop playing "+mp3Files[index]
+            lcd.message("Stopped")
+            os.system("pkill omxplayer")
+            stop=1
+            sleep(2)
+            lcd.clear()
+            lcd.message("Goodbye!")
+            sleep(2)
+            lcd.clear()
+            #GPIO.cleanup()
+         
+    if(GPIO.input(nextBtn)== True):
+        if stop==0:
+          lcd.clear()
+          omx.stdin.write("q")
+          run=1
+          os.system("pkill omxplayer")
+          index=index+1
+          lcd.message("Playing")
+          lcd.clear()
+          songPlaying=eyed3.load(mp3Files[index])
+          lcd.message(songPlaying.tag.title+"\n"+songPlaying.tag.artist) 
+        if len(songPlaying.tag.title)>lcd_width:
+          for i in range(lcd_width-len(songPlaying.tag.title)):
+               sleep(0.5)
+               lcd.move_left()            
+        if index>listMp3 - 1:
+              index=0
+              sleep(1)
+              
+    if (GPIO.input(previousBtn)==True):
+         if stop==0:
+             omx.stdin.write("q")
+             run=1
+             os.system("pkill omxplayer")
+             index=index-1
+             lcd.message("Playing")
+             sleep(1)
+             lcd.clear()
+             songPlaying=eyed3.load(mp3Files[index])
+             lcd.message(songPlaying.tag.title+"\n"+songPlaying.tag.artist) 
+         if index<0:
+                 index=0
+                 sleep(1)
+    if (GPIO.input(volUpBtn)==True):
+         if stop==0:    
+            omx.stdin.write("+")
+            sleep(1)
+            
+    if (GPIO.input(volDwnBtn)==True):
+         if stop==0:    
+            omx.stdin.write("-")
+            sleep(1)
+            
+    if(GPIO.input(shuffleBtn)==True):
+        proc=omx.poll() 
+        if stop==0 and proc!=0:
+            os.system("pkill omxplayer")
+            run=0
+            shuffle=1
+            sleep(1)
+       
+    else:
+        proc =omx.poll()
+        if (proc==0 and stop==0):
+            run=1
+            index=index+1
+            if index>listMp3-1:
+                index=0
+sleep(1)
