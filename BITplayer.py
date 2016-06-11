@@ -11,19 +11,19 @@ print "Running BITplayer.py script"
 sleep(10)
 
 #Raspberry Pi pin configuration:
-lcd_rs=26  
-lcd_en=19
-lcd_d4 =13
-lcd_d5 =6
-lcd_d6 =5
-lcd_d7 =16
-pausePlyBtn=17
-stopBtn=22
-nextBtn=21
-previousBtn=0 
-volUpBtn=0
-volDwnBtn=0
-shuffleBtn=0
+lcd_rs=18 
+lcd_en=23
+lcd_d4 =12
+lcd_d5 =16
+lcd_d6 =20
+lcd_d7 =21
+pausePlyBtn=4
+stopBtn=17
+nextBtn=22
+previousBtn=27 
+volUpBtn=5
+volDwnBtn=6
+shuffleBtn=13
 path= "/media/pi/B228858B28854EF3/BIT"
 run=1#script runs
 index=0#index music to play
