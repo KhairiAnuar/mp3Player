@@ -50,12 +50,12 @@ GPIO.setup(previousBtn,GPIO.IN)#previous
 GPIO.setup(volUpBtn,GPIO.IN)#Volume up
 GPIO.setup(volDwnBtn,GPIO.IN)#volume down
 GPIO.setup(shuffleBtn,GPIO.IN)#shuffle
-GPIO.setup(lcd_rs,GPIO.OUT)
-GPIO.setup(lcd_en,GPIO.OUT)
-GPIO.setup(lcd_d4,GPIO.OUT)
-GPIO.setup(lcd_d5,GPIO.OUT)
-GPIO.setup(lcd_d6,GPIO.OUT)
-GPIO.setup(lcd_d7,GPIO.OUT)
+GPIO.setup(lcd_rs,GPIO.OUT)#registerSelect
+GPIO.setup(lcd_en,GPIO.OUT)#enable
+GPIO.setup(lcd_d4,GPIO.OUT)#data 4
+GPIO.setup(lcd_d5,GPIO.OUT)#data 5
+GPIO.setup(lcd_d6,GPIO.OUT)#data 6
+GPIO.setup(lcd_d7,GPIO.OUT)#data 7
 
 os.chdir(path)#change directory
 mp3Files=glob.glob("*.mp3")#finds all mp3 files
@@ -67,7 +67,7 @@ shuffleList=random.choice(os.listdir("/media/pi/B228858B28854EF3/BIT"))
 
 lcd.message("Music Player \nby StrawberryPi")  
 sleep(1.5)
-lcd.clear()
+lcd.clear()#clear LCD
 if (listMp3 <= 0):
     print "Unable to find Mp3 files"
   
@@ -75,16 +75,15 @@ if (listMp3 <= 0):
 #     Start the music      #
 ############################
 while True:
-   
+    #play music in alphabetic order
     if run==1 and shuffle ==0:
       lcd.clear()
       omx= subprocess.Popen(["omxplayer","-o","local",mp3Files[index]],stdin=subprocess.PIPE)
-      print "Song "+mp3Files[index]
       lcd.message("Playing")
       sleep(1)
       lcd.clear()
-      songPlaying=eyed3.load(mp3Files[index])
-      lcd.message(songPlaying.tag.title+"\n"+ songPlaying.tag.artist)
+      songPlaying=eyed3.load(mp3Files[index])#load eyed3
+      lcd.message(songPlaying.tag.title+"\n"+ songPlaying.tag.artist)#get metadata from song
       status=1
       run=0
       stop=0
@@ -104,14 +103,15 @@ while True:
        stop=0
        shuffle=0
        sleep(1)
-
+       
+    #when play or pause is pressed
     if(GPIO.input(pausePlyBtn)==True):
       lcd.clear()
       checkBtn+=1
       proc=omx.poll()
       if proc !=0:
          omx.stdin.write("p")#pause or play
-      if checkBtn%2==0: #check for pause and play
+      if checkBtn%2==0: #checks if it is in pause state or play state
            lcd.clear()
            lcd.message("Paused")
            status=0
@@ -126,7 +126,7 @@ while True:
           status=1      
           sleep(1) 
       
-          
+    #when stop button is pressed
     if(GPIO.input(stopBtn)==True):
         proc=omx.poll()
         if proc !=0:
@@ -142,7 +142,8 @@ while True:
             sleep(2)
             lcd.clear()
             #GPIO.cleanup()
-         
+      
+      #when next button is pressed    
     if(GPIO.input(nextBtn)== True):
         if stop==0:
           lcd.clear()
@@ -161,7 +162,8 @@ while True:
         if index>listMp3 - 1:
               index=0
               sleep(1)
-    #Play previous song           
+              
+    #when previous button is pressed plays previous song           
     if (GPIO.input(previousBtn)==True):
          if stop==0:
              omx.stdin.write("q")
@@ -176,6 +178,7 @@ while True:
          if index<0:
                  index=0
                  sleep(1)
+                 
     #Volume up button press
     if (GPIO.input(volUpBtn)==True):
          if stop==0:    
