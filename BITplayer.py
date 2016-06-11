@@ -155,10 +155,10 @@ while True:
           lcd.clear()
           songPlaying=eyed3.load(mp3Files[index])
           lcd.message(songPlaying.tag.title+"\n"+songPlaying.tag.artist) 
-        if len(songPlaying.tag.title)>lcd_width:
-          for i in range(lcd_width-len(songPlaying.tag.title)):
-               sleep(0.5)
-               lcd.move_left()            
+       # if len(songPlaying.tag.title)>lcd_width:
+       #   for i in range(lcd_width-len(songPlaying.tag.title)):
+       #        sleep(0.5)
+       #        lcd.move_left()            
         if index>listMp3 - 1:
               index=0
               sleep(1)
